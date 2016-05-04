@@ -1,6 +1,7 @@
 import logging, os, sys, cgi
 import xml.etree.ElementTree as ET
 from github3 import GitHub
+from requests import get
 
 logging.basicConfig(level=logging.DEBUG) #logging.WARNING
 logging.getLogger('github3').setLevel(logging.WARNING)
@@ -25,7 +26,7 @@ def get_fail_from_files(paths):
 		total_tests = int(root.get('tests'))
 		log.debug("total tests: {count}".format(count=total_tests))
 		failed_tests = int(root.get('failures')) + int(root.get('errors')) + int(root.get('skipped'))
-		log.debug("failed tests: {count}".format(count=failed_tests))
+		log.debug("non-green tests: {count}".format(count=failed_tests))
 		total_score += total_tests - failed_tests
 		log.debug("score for current file: {score}".format(score=total_score))
 		for testcase in root.findall('testcase'):
@@ -42,8 +43,6 @@ def get_fail_from_files(paths):
 	log.debug("All tests passed! Yay :D")
 	return (None, None, 0)
 
-# "https://tdd-chart.herokuapp.com/score/add?user={REPO_SLUG}&score={TEST_COUNT}"
-
 test_file_paths = [f for f in os.listdir(test_files_dir) if is_test_file(f)]
 test_file_paths.sort()
 log.debug("Found {count} files: {list}".format(count=len(test_file_paths), list=test_file_paths))
@@ -58,6 +57,7 @@ message = message.replace('\\n', '\n')
 
 log.debug("Test failure: {name}, {m}".format(name=name, m=repr(message)))
 
+# Create Github issue
 gh_username = 'swt2public'
 gh_password = 'wnjxeUn6pQpcnR4V'
 
@@ -72,5 +72,11 @@ owner, repo = os.environ.get('TRAVIS_REPO_SLUG').split('/')
 log.debug("Repo: {owner}/{repo}".format(owner=owner, repo=repo))
 
 log.debug("Attempting to create issue...")
-# resp = github.create_issue(owner, repo, name, message)
-# log.debug("Created ticket: {resp}".format(resp=resp))
+resp = github.create_issue(owner, repo, name, message)
+log.debug("Created ticket: {resp}".format(resp=resp))
+
+# Post results
+log.debug("Attempting to post score...")
+url = "https://tdd-chart.herokuapp.com/score/add?user={user}&score={score}"
+resp = get(url.format(user=owner, score=score))
+log.debug("TDD-chart response: {code}".format(code=resp.status_code))
