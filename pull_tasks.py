@@ -7,7 +7,9 @@ logging.getLogger('sh').setLevel(logging.WARNING)
 log = logging.getLogger(__name__)
 
 remote_name = "tasks"
+# Change me
 remote_url_https = "https://github.com/hpi-swt2-exercise/java-tdd-challenge-tasks.git"
+# Change me
 remote_url_ssh = "git@github.com:hpi-swt2-exercise/java-tdd-challenge-tasks.git"
 repo_path = os.getcwd()
 
